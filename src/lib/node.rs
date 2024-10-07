@@ -1,8 +1,7 @@
-use std::sync::Arc;
 use rand::Rng;
 
 /// A struct that represents a node in the nn
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node<T> {
     /// A vec of the weights associated with the current node.
     /// This is assumed that the length is the same as the amount of nodes in the previous layer.
@@ -10,13 +9,6 @@ pub struct Node<T> {
     /// A vec of the biases associated with the current node
     /// This is assumed that the length is the same as the amount of nodes in the previous layer.
     biases: Vec<T>,
-}
-
-pub type StaticNode = f64;
-
-pub enum NodeTypes {
-    Node(Node<f64>),
-    StaticNode(StaticNode),
 }
 
 impl<T> Node<T> {
@@ -56,10 +48,6 @@ impl Node<f64> {
 
     }
 
-}
-
-impl Node<f64> {
-
     pub fn evalute(&self, input: &Vec<f64>) -> f64 {
 
         let mut output: f64 = 0.0;
@@ -81,15 +69,15 @@ impl Node<f64> {
 
 /// A struct that represents a layer of nodes
 /// All layers of nodes are inputs to the following node layer
-#[derive(Debug)]
-pub struct NodeLayer<T> {
+#[derive(Debug, Clone)]
+pub struct NodeLayer<'a, T> {
     /// All the nodes on the layer
     pub nodes: Vec<Node<T>>,
     /// The next node layer in the network
-    next_node_layer: Option<Arc<NodeLayer<T>>>,
+    pub next_node_layer: Option<&'a NodeLayer<'a, T>>,
 }
 
-impl<T> NodeLayer<T> {
+impl<'a, T> NodeLayer<'a, T> {
 
     /// Method for creating a new `NodeLayer` from an array of nodes
     pub fn new_from_nodes(nodes: Vec<Node<T>>) -> Self {
@@ -100,17 +88,24 @@ impl<T> NodeLayer<T> {
         };
 
     }
+
+    /// Pushed layer in front of this layer
+    pub fn set_previous(&'a mut self, value: &'a Self) -> (){
+
+        self.next_node_layer = Some(value);
+
+    }
 }
 
-impl NodeLayer<f64> {
+impl<'a> NodeLayer<'a, f64> {
 
     /// Method for creating a new `NodeLayer`.
     /// Uses the `Node::new_random()` method for initializing its values.
-    pub fn new_random(previous_node_count: usize, capacity: usize, next_node_layer: Option<Arc<NodeLayer<f64>>>) -> Self {
+    pub fn new_random(previous_node_count: usize, capacity: usize, next_node_layer: Option<&'a NodeLayer<f64>>) -> Self {
 
         let mut nodes: Vec<Node<f64>> = Vec::with_capacity(capacity);
 
-        for i in 0..capacity {
+        for _i in 0..capacity {
             nodes.push(Node::new_random(previous_node_count));
         }
 
@@ -135,20 +130,27 @@ impl NodeLayer<f64> {
         return output;
 
     }
+
+    /// Sets the next node layer.
+    pub fn set_next_node_layer(&mut self, next_node_layer: &'a Self) -> () {
+
+        self.next_node_layer = Some(next_node_layer);
+
+    }
 }
 
 #[derive(Debug)]
-pub struct InputLayer<T> {
+pub struct InputLayer<'a, T> {
     /// All the nodes on the layer
     pub nodes: Vec<T>,
     /// The next node layer in the network
-    next_node_layer: Option<Arc<NodeLayer<T>>>,
+    pub next_node_layer: Option<&'a NodeLayer<'a, T>>,
 }
 
-impl<T> InputLayer<T> {
+impl<'a, T> InputLayer<'a, T> {
 
     /// Creates a new `InputLayer`
-    pub fn new(nodes: Vec<T>, next_node_layer: Option<Arc<NodeLayer<T>>>) -> Self {
+    pub fn new(nodes: Vec<T>, next_node_layer: Option<&NodeLayer<T>>) -> Self {
 
         return Self {
             nodes,
@@ -159,7 +161,7 @@ impl<T> InputLayer<T> {
 
 }
 
-impl InputLayer<f64> {
+impl<'a> InputLayer<'a, f64> {
 
     pub fn evaluate(&self) -> Vec<f64> {
 
