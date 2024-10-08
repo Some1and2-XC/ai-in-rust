@@ -155,9 +155,9 @@ impl<T: NodeAble<T>> NodeLayer<T> {
 }
 
 /// A type representing a layer of input nodes
-pub type InputLayer<T> where T: NodeAble<T> = Vec<T>;
+pub type InputLayer<T> = Vec<T>;
 /// A type representing a layer of output nodes
-pub type OutputLayer<T> where T: NodeAble<T> = Vec<T>;
+pub type OutputLayer<T> = Vec<T>;
 
 /// A struct representing an entire network.
 /// This struct holds both an input layer and multiple evaluation layers.
@@ -168,7 +168,6 @@ where T: NodeAble<T> {
     /// These are the inner layers or "hidden layers" that make up the network.
     pub layers: Vec<NodeLayer<T>>,
 }
-
 
 impl<T: NodeAble<T>> LayerList<T> {
 
